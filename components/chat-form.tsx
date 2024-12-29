@@ -20,6 +20,42 @@ import { supabase } from '@/lib/supabase'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 
+// Add type definitions for the Web Speech API
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+}
+
+interface SpeechRecognitionEvent {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 export function ChatForm({
   className,
   ...props
@@ -106,7 +142,7 @@ export function ChatForm({
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = Array.from(event.results)
           .map(result => result[0])
           .map(result => result.transcript)
@@ -328,7 +364,7 @@ export function ChatForm({
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top">Send message</TooltipContent>
+            <TooltipContent side="TooltipContent side="top">Send message</TooltipContent>
           </Tooltip>
         </form>
         {error && (
