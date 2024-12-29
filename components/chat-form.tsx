@@ -29,7 +29,7 @@ export function ChatForm({
   const [conversationId, setConversationId] = useState<string | null>(null)
   const { messages, input, setInput, handleSubmit, isLoading, error, reload, stop } = useChat({
     api: '/api/chat',
-    id: conversationId,
+    id: conversationId || undefined,
     onFinish: (message) => {
       if (user) {
         saveMessageToSupabase(message)
