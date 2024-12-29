@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { useChat } from 'ai/react'
-import { Loader2, Send, Trash, Sparkles, Copy, Check, Mic, MicOff, Share, Download, RotateCcw, LogIn, LogOut, User, Save } from 'lucide-react'
+import { Loader2, Send, Trash, Sparkles, Copy, Check, Share, Download, RotateCcw, LogIn, LogOut, User, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AutoResizeTextarea } from '@/components/autoresize-textarea'
@@ -20,14 +20,15 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 import { Database } from '@/lib/database.types'
+import { Message, Conversation, User } from '@/types'
 
 interface ChatFormProps extends React.ComponentProps<'div'> {
-  initialMessages?: any[];
+  initialMessages?: Message[];
 }
 
 export function ChatForm({ className, initialMessages, ...props }: ChatFormProps) {
   const { theme } = useTheme()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const supabase = createClientComponentClient<Database>()
   const { messages, input, setInput, handleSubmit, isLoading, error, reload, stop } = useChat({
@@ -43,8 +44,6 @@ export function ChatForm({ className, initialMessages, ...props }: ChatFormProps
 
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
-  const [isListening, setIsListening] = useState(false)
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
@@ -79,7 +78,7 @@ export function ChatForm({ className, initialMessages, ...props }: ChatFormProps
     }
   }
 
-  const saveMessageToSupabase = async (message: any) => {
+  const saveMessageToSupabase = async (message: Message) => {
     if (conversationId) {
       await supabase.from('messages').insert({
         conversation_id: conversationId,
@@ -101,35 +100,6 @@ export function ChatForm({ className, initialMessages, ...props }: ChatFormProps
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
   }, [messages])
-
-  useEffect(() => {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let transcript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        setInput(transcript);
-      };
-
-      setRecognition(recognition);
-    }
-  }, [setInput]);
-
-  const toggleListening = () => {
-    if (isListening) {
-      recognition?.stop();
-    } else {
-      recognition?.start();
-    }
-    setIsListening(!isListening);
-  };
 
   const copyToClipboard = (text: string, index: number) => {
     navigator.clipboard.writeText(text)
@@ -153,7 +123,7 @@ export function ChatForm({ className, initialMessages, ...props }: ChatFormProps
         toast.success('Conversation shared! URL copied to clipboard')
       }
     } else {
-      const conversationText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+      const conversationText = messages.map((m: Message) => `${m.role}: ${m.content}`).join('\n\n');
       navigator.clipboard.writeText(conversationText);
       toast.success('Conversation copied to clipboard!');
     }
@@ -301,26 +271,6 @@ export function ChatForm({ className, initialMessages, ...props }: ChatFormProps
             placeholder="Ask Aura anything..."
             className="flex-1 resize-none rounded-md border p-2 text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="rounded-full"
-                onClick={toggleListening}
-              >
-                {isListening ? (
-                  <MicOff className="h-4 w-4 text-red-500" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              {isListening ? 'Stop voice input' : 'Start voice input'}
-            </TooltipContent>
-          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button type="submit" size="icon" className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" disabled={isLoading}>
