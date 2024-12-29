@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'react-hot-toast'
 import { User } from '@supabase/supabase-js'
+import { User, Profile } from '@/types'
 
 export function ProfileForm() {
   const [user, setUser] = useState<User | null>(null)
@@ -23,7 +24,7 @@ export function ProfileForm() {
           .from('profiles')
           .select('username, website')
           .eq('id', user.id)
-          .single()
+          .single() as { data: Profile | null, error: any }
 
         if (error) {
           console.error('Error fetching profile:', error)
