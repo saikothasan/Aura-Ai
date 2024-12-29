@@ -2,12 +2,13 @@ import { CoreMessage, streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { Message } from '@/types'
 
 export const runtime = 'edge'
 
 export async function POST(req: Request) {
   try {
-    const { messages, id }: { messages: CoreMessage[]; id: string } = await req.json()
+    const { messages, id }: { messages: Message[]; id: string } = await req.json()
 
     const supabase = createRouteHandlerClient({ cookies })
     const { data: { session } } = await supabase.auth.getSession()
