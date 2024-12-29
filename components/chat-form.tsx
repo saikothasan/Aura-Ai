@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { useChat } from 'ai/react'
-import { Loader2, Send, Trash, Sparkles, Copy, Check, Share, Download, RotateCcw, LogIn, LogOut, User, Save } from 'lucide-react'
+import { Loader2, Send, Trash, Sparkles, Copy, Check, Share, Download, RotateCcw, LogIn, LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AutoResizeTextarea } from '@/components/autoresize-textarea'
@@ -20,7 +20,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 import { Database } from '@/lib/database.types'
-import { Message, Conversation, User } from '@/types'
+import { Message, Conversation } from '@/types'
 
 interface ChatFormProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[];
