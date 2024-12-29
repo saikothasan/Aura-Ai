@@ -1,136 +1,165 @@
-'use client'
+'use client';
 
-import { cn } from '@/lib/utils'
-import { useChat } from 'ai/react'
-import { Loader2, Send, Trash, Sparkles, Copy, Check, Share, Download, RotateCcw, LogIn, LogOut, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { AutoResizeTextarea } from '@/components/autoresize-textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useEffect, useRef, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { useTheme } from "next-themes"
-import { motion, AnimatePresence } from 'framer-motion'
-import { toast } from 'react-hot-toast'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { v4 as uuidv4 } from 'uuid'
-import Link from 'next/link'
-import { Database } from '@/lib/database.types'
-import { Message, Conversation, User } from '@/types'
+import { cn } from '@/lib/utils';
+import { useChat } from 'ai/react';
+import {
+  Loader2,
+  Send,
+  Trash,
+  Sparkles,
+  Copy,
+  Check,
+  Share,
+  Download,
+  RotateCcw,
+  LogIn,
+  LogOut,
+  User,
+  Save,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AutoResizeTextarea } from '@/components/autoresize-textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useTheme } from 'next-themes';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { v4 as uuidv4 } from 'uuid';
+import Link from 'next/link';
+import { Database } from '@/lib/database.types';
+import { Message, User } from '@/types';
 
 interface ChatFormProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[];
 }
 
 export function ChatForm({ className, initialMessages, ...props }: ChatFormProps) {
-  const { theme } = useTheme()
-  const [user, setUser] = useState<User | null>(null)
-  const [conversationId, setConversationId] = useState<string | null>(null)
-  const supabase = createClientComponentClient<Database>()
+  const { theme } = useTheme();
+  const [user, setUser] = useState<User | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const supabase = createClientComponentClient<Database>();
   const { messages, input, setInput, handleSubmit, isLoading, error, reload, stop } = useChat({
     api: '/api/chat',
     id: conversationId || undefined,
     initialMessages,
     onFinish: (message) => {
       if (user) {
-        saveMessageToSupabase(message)
+        saveMessageToSupabase(message).catch(() => {
+          toast.error('Failed to save message.');
+        });
       }
     },
-  })
+  });
 
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
+      setUser(session?.user ?? null);
       if (session?.user) {
-        fetchOrCreateConversation(session.user.id)
+        fetchOrCreateConversation(session.user.id).catch(() => {
+          toast.error('Failed to fetch or create conversation.');
+        });
       } else {
-        setConversationId(null)
+        setConversationId(null);
       }
-    })
+    });
 
     return () => {
-      authListener.subscription.unsubscribe()
-    }
-  }, [supabase.auth])
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   const fetchOrCreateConversation = async (userId: string) => {
-    let { data: conversation, error } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    try {
+      let { data: conversation, error } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-    if (error || !conversation) {
-      const newConversationId = uuidv4()
-      await supabase.from('conversations').insert({ id: newConversationId, user_id: userId })
-      setConversationId(newConversationId)
-    } else {
-      setConversationId(conversation.id)
+      if (error || !conversation) {
+        const newConversationId = uuidv4();
+        await supabase.from('conversations').insert({ id: newConversationId, user_id: userId });
+        setConversationId(newConversationId);
+      } else {
+        setConversationId(conversation.id);
+      }
+    } catch {
+      toast.error('Error initializing conversation.');
     }
-  }
+  };
 
   const saveMessageToSupabase = async (message: Message) => {
     if (conversationId) {
-      await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        role: message.role,
-        content: message.content,
-      })
+      try {
+        await supabase.from('messages').insert({
+          conversation_id: conversationId,
+          role: message.role,
+          content: message.content,
+        });
+      } catch {
+        toast.error('Failed to save message.');
+      }
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>)
+      e.preventDefault();
+      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
     }
-  }
+  };
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [messages])
+  }, [messages]);
 
   const copyToClipboard = (text: string, index: number) => {
-    navigator.clipboard.writeText(text)
-    setCopiedIndex(index)
-    setTimeout(() => setCopiedIndex(null), 2000)
-  }
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
 
   const shareConversation = async () => {
     if (user && conversationId) {
-      const { data, error } = await supabase
-        .from('conversations')
-        .update({ is_public: true })
-        .eq('id', conversationId)
-        .select()
+      try {
+        const { error } = await supabase
+          .from('conversations')
+          .update({ is_public: true })
+          .eq('id', conversationId);
 
-      if (error) {
-        toast.error('Failed to share conversation')
-      } else {
-        const shareUrl = `${window.location.origin}/conversation/${conversationId}`
-        navigator.clipboard.writeText(shareUrl)
-        toast.success('Conversation shared! URL copied to clipboard')
+        if (error) {
+          toast.error('Failed to share conversation');
+        } else {
+          const shareUrl = `${window.location.origin}/conversation/${conversationId}`;
+          navigator.clipboard.writeText(shareUrl);
+          toast.success('Conversation shared! URL copied to clipboard.');
+        }
+      } catch {
+        toast.error('Error sharing conversation.');
       }
     } else {
-      const conversationText = messages.map((m: Message) => `${m.role}: ${m.content}`).join('\n\n');
+      const conversationText = messages.map((m) => `${m.role}: ${m.content}`).join('\n\n');
       navigator.clipboard.writeText(conversationText);
       toast.success('Conversation copied to clipboard!');
     }
-  }
+  };
 
   const downloadConversation = () => {
-    const conversationText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+    const conversationText = messages.map((m) => `${m.role}: ${m.content}`).join('\n\n');
     const blob = new Blob([conversationText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -141,34 +170,42 @@ export function ChatForm({ className, initialMessages, ...props }: ChatFormProps
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success('Conversation downloaded!');
-  }
+  };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    toast.success('Logged out successfully')
-  }
+    try {
+      await supabase.auth.signOut();
+      toast.success('Logged out successfully.');
+    } catch {
+      toast.error('Failed to log out.');
+    }
+  };
 
   const saveConversation = async () => {
     if (user && !conversationId) {
-      const newConversationId = uuidv4()
-      await supabase.from('conversations').insert({ id: newConversationId, user_id: user.id })
-      setConversationId(newConversationId)
-      
-      for (const message of messages) {
-        await supabase.from('messages').insert({
-          conversation_id: newConversationId,
-          role: message.role,
-          content: message.content,
-        })
+      try {
+        const newConversationId = uuidv4();
+        await supabase.from('conversations').insert({ id: newConversationId, user_id: user.id });
+        setConversationId(newConversationId);
+
+        for (const message of messages) {
+          await supabase.from('messages').insert({
+            conversation_id: newConversationId,
+            role: message.role,
+            content: message.content,
+          });
+        }
+
+        toast.success('Conversation saved successfully.');
+      } catch {
+        toast.error('Failed to save conversation.');
       }
-      
-      toast.success('Conversation saved successfully')
     } else if (!user) {
-      toast.error('Please log in to save conversations')
+      toast.error('Please log in to save conversations.');
     } else {
-      toast.info('Conversation is already being saved')
+      toast.info('Conversation is already being saved.');
     }
-  }
+  };
 
   return (
     <div className={cn('flex h-full flex-col', className)} {...props}>
@@ -380,4 +417,3 @@ export function ChatForm({ className, initialMessages, ...props }: ChatFormProps
     </div>
   )
 }
-
