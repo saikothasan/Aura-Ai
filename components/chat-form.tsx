@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { useChat } from 'ai/react'
-import { ArrowUpIcon, Loader2, Send, Trash, Sparkles, Copy, Check, Mic, MicOff, Share, Download, RotateCcw, LogIn, LogOut, User, Save } from 'lucide-react'
+import { Loader2, Send, Trash, Sparkles, Copy, Check, Mic, MicOff, Share, Download, RotateCcw, LogIn, LogOut, User, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AutoResizeTextarea } from '@/components/autoresize-textarea'
@@ -16,56 +16,24 @@ import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useTheme } from "next-themes"
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'react-hot-toast'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
+import { Database } from '@/lib/database.types'
 
-// Add type definitions for the Web Speech API
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  onresult: (event: SpeechRecognitionEvent) => void;
+interface ChatFormProps extends React.ComponentProps<'div'> {
+  initialMessages?: any[];
 }
 
-interface SpeechRecognitionEvent {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  isFinal: boolean;
-  [index: number]: SpeechRecognitionAlternative;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
-
-export function ChatForm({
-  className,
-  ...props
-}: React.ComponentProps<'div'>) {
+export function ChatForm({ className, initialMessages, ...props }: ChatFormProps) {
   const { theme } = useTheme()
   const [user, setUser] = useState<any>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const supabase = createClientComponentClient<Database>()
   const { messages, input, setInput, handleSubmit, isLoading, error, reload, stop } = useChat({
     api: '/api/chat',
     id: conversationId || undefined,
+    initialMessages,
     onFinish: (message) => {
       if (user) {
         saveMessageToSupabase(message)
@@ -91,7 +59,7 @@ export function ChatForm({
     return () => {
       authListener.subscription.unsubscribe()
     }
-  }, [])
+  }, [supabase.auth])
 
   const fetchOrCreateConversation = async (userId: string) => {
     let { data: conversation, error } = await supabase
@@ -328,7 +296,7 @@ export function ChatForm({
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <AutoResizeTextarea
             value={input}
-            onChange={(value) => setInput(value)}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask Aura anything..."
             className="flex-1 resize-none rounded-md border p-2 text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
