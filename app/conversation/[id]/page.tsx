@@ -1,7 +1,8 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
-import ReactMarkdown from 'react-markdown'
+import { ChatForm } from '@/components/chat-form'
+import { Conversation, Message } from '@/types'
 
 export default async function ConversationPage({ params }: { params: { id: string } }) {
   const supabase = createServerComponentClient({ cookies })
@@ -11,7 +12,7 @@ export default async function ConversationPage({ params }: { params: { id: strin
     .from('conversations')
     .select('*, messages(*)')
     .eq('id', params.id)
-    .single()
+    .single() as { data: Conversation | null, error: any }
 
   if (error || !conversation) {
     notFound()
@@ -21,18 +22,16 @@ export default async function ConversationPage({ params }: { params: { id: strin
     notFound()
   }
 
+  const initialMessages = conversation.messages.map((message: Message) => ({
+    id: message.id,
+    role: message.role,
+    content: message.content,
+  }))
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Conversation</h1>
-      <div className="space-y-4">
-        {conversation.messages.map((message: any) => (
-          <div key={message.id} className="border rounded-lg p-4">
-            <div className="font-semibold mb-2">{message.role === 'user' ? 'You' : 'Aura'}</div>
-            <ReactMarkdown className="prose dark:prose-invert">
-              {message.content}
-            </ReactMarkdown>
-          </div>
-        ))}
+    <div className="container flex min-h-[calc(100vh-8rem)] items-center justify-center py-4 sm:py-8">
+      <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-4xl bg-background/30 backdrop-blur-md rounded-lg shadow-lg overflow-hidden border border-border">
+        <ChatForm initialMessages={initialMessages} />
       </div>
     </div>
   )
