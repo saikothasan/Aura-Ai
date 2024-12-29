@@ -20,7 +20,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 import { Database } from '@/lib/database.types'
-import { Message, Conversation } from '@/types'
+import { Message, Conversation, User } from '@/types'
 
 interface ChatFormProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[];
