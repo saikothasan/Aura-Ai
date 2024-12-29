@@ -2,7 +2,7 @@ import { Database } from '@/lib/database.types'
 
 export type Message = {
   id: string
-  role: 'user' | 'assistant'
+  role: "user" | "assistant" // Narrowed to match your expected values
   content: string
   created_at?: string
 }
