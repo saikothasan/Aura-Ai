@@ -409,5 +409,58 @@ export function ChatForm({
                 variant="outline"
                 size="sm"
                 onClick={shareConversation}
-                className="text-blue-500 border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900 text-xs sm:
+                className="text-blue-500 border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900 text-xs sm:text-sm"
+              >
+                <Share className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                Share
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadConversation}
+                className="text-green-500 border-green-500 hover:bg-green-50 dark:hover:bg-green-900 text-xs sm:text-sm"
+              >
+                <Download className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                Download
+              </Button>
+              {user ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={saveConversation}
+                    className="text-yellow-500 border-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900 text-xs sm:text-sm"
+                  >
+                    <Save className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                    Save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="text-red-500 border-red-500 hover:bg-red-50 dark:hover:bg-red-900 text-xs sm:text-sm"
+                  >
+                    <LogOut className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Link href="/login">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-indigo-500 border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900 text-xs sm:text-sm"
+                  >
+                    <LogIn className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                    Login
+                  </Button>
+                </Link>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
