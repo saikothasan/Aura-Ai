@@ -22,7 +22,7 @@ export default async function Page() {
     <div className="container flex min-h-[calc(100vh-8rem)] items-center justify-center py-4 sm:py-8">
       <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-4xl bg-background/30 backdrop-blur-md rounded-lg shadow-lg overflow-hidden border border-border">
         <Suspense fallback={<LoadingSkeleton />}>
-          <ChatForm initialSession={session} />
+          <ChatForm />
         </Suspense>
       </div>
     </div>
