@@ -1,11 +1,10 @@
 import { Database } from '@/lib/database.types'
+import { Message as SDKMessage } from "@ai-sdk/ui-utils";
 
-export type Message = {
-  id: string
-  role: "user" | "assistant" // Narrowed to match your expected values
-  content: string
-  created_at?: string
-}
+export type Message = Omit<SDKMessage, "role"> & {
+  role: "user" | "assistant"; // Narrowing down allowed roles
+};
+
 
 export type Conversation = {
   id: string
