@@ -2,6 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { Conversation } from '@/types'
 
 export default async function HistoryPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -15,7 +16,7 @@ export default async function HistoryPage() {
     .from('conversations')
     .select('id, created_at, messages(id)')
     .eq('user_id', session.user.id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) as { data: Conversation[] | null, error: any }
 
   if (error) {
     console.error('Error fetching conversations:', error)
@@ -27,7 +28,7 @@ export default async function HistoryPage() {
       <h1 className="text-2xl font-bold mb-6">Conversation History</h1>
       {conversations && conversations.length > 0 ? (
         <ul className="space-y-4">
-          {conversations.map((conversation) => (
+          {conversations.map((conversation: Conversation) => (
             <li key={conversation.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800">
               <Link href={`/conversation/${conversation.id}`}>
                 <div className="flex justify-between items-center">
