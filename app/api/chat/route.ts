@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       Always maintain a friendly and helpful tone. If you're unsure about something, admit it and offer to explore the topic together.`,
       messages,
       temperature: 0.7,
-      max_tokens: 1000,
+      maxTokens: 1000,
     })
 
     return result.toDataStreamResponse()
