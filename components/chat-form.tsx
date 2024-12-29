@@ -2,19 +2,19 @@
 
 import { cn } from '@/lib/utils';
 import { useChat } from 'ai/react';
-import {
-  Loader2,
-  Send,
-  Trash,
-  Sparkles,
-  Copy,
-  Check,
-  Share,
-  Download,
-  RotateCcw,
-  LogIn,
-  LogOut,
-  User,
+import { 
+  Loader2, 
+  Send, 
+  Trash, 
+  Sparkles, 
+  Copy, 
+  Check, 
+  Share, 
+  Download, 
+  RotateCcw, 
+  LogIn, 
+  LogOut, 
+  User as UserIcon, // Rename this import
   Save,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
